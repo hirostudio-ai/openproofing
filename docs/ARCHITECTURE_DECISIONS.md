@@ -141,3 +141,64 @@ This is a lightweight decision log. Add new entries; do not rewrite an accepted 
 **Reason:** Self-hosters may need the platform to appear as their own client service.
 
 **Consequence:** Branding is structured installation configuration served through one branding layer. OpenProofing remains the internal identity used by code, migrations and upgrade tooling. Multi-brand portals within one installation are later scope.
+
+## ADR 015 Auth.js v5 with Prisma adapter
+
+**Status:** Accepted
+
+**Decision:** Use Auth.js v5 with a Prisma database adapter for authentication. Use standalone PostgreSQL and MinIO for object storage. Do not use Supabase.
+
+**Reason:** Maximises self-hosting flexibility with no vendor lock-in. Auth.js v5 supports email magic links through its database adapter, standalone Postgres keeps the deployment simple, and MinIO provides S3-compatible storage without external dependencies.
+
+**Consequence:** Session management uses Auth.js JWT or database sessions. The local dev stack requires a MinIO container alongside PostgreSQL. Storage adapters target S3-compatible APIs.
+
+## ADR 016 BullMQ with Redis for background jobs
+
+**Status:** Accepted
+
+**Decision:** Use BullMQ with Redis for background job processing (email, rendering, exports, reminders).
+
+**Reason:** BullMQ is battle-tested with mature retry, scheduling and dashboard tooling. It is widely used with Next.js and Node.js applications.
+
+**Consequence:** Redis is added as an infrastructure dependency for both local development and production. The `docker-compose.yml` must include a Redis container.
+
+## ADR 017 pnpm as package manager
+
+**Status:** Accepted
+
+**Decision:** Use pnpm as the package manager.
+
+**Reason:** pnpm provides faster installs, strict dependency isolation and disk efficiency. It prevents phantom dependencies through its strict node_modules structure.
+
+**Consequence:** Contributors must install pnpm. The lockfile is `pnpm-lock.yaml`. CI pipelines use `pnpm install --frozen-lockfile`.
+
+## ADR 018 Tailwind CSS v4
+
+**Status:** Accepted
+
+**Decision:** Use Tailwind CSS v4 (CSS-first configuration).
+
+**Reason:** v4 is the latest release with a simpler CSS-native configuration model, better performance and smaller output.
+
+**Consequence:** Configuration uses CSS `@theme` directives instead of a `tailwind.config.js` file. Tailwind is installed in Phase 0 but theming is deferred until UI work begins.
+
+## ADR 019 Transient AWAITING_REVIEW state
+
+**Status:** Accepted
+
+**Decision:** `AWAITING_REVIEW` is a transient state. When the agency uploads a proof and it validates, the system atomically creates the round snapshot, creates assignments and advances to `REVIEW_IN_PROGRESS`. The agency marks which round the uploaded version is for.
+
+**Reason:** The two-step exists so the audit log captures both events (proof validated and round started), but there is no manual intervention between them.
+
+**Consequence:** The workflow service chains the `proof validated → round started` transitions atomically. `AWAITING_REVIEW` is never a resting state visible to users.
+
+## ADR 020 Optional reviewers do not block stage progression
+
+**Status:** Accepted
+
+**Decision:** When all required reviewers in a stage complete or are skipped, the stage advances. Optional reviewers (`required: false`) who have not completed are marked as not completed. They do not block stage progression.
+
+**Reason:** Optional reviewers are supplementary. The workflow should not stall waiting for non-essential feedback.
+
+**Consequence:** The stage completion check evaluates only `required: true` assignments. The UI should indicate which reviewers were optional and did not complete.
+

@@ -15,10 +15,10 @@ OpenProofing is distributed for self-hosting. Provide container-based deployment
 - Web application: Next.js and TypeScript
 - Relational store: PostgreSQL with Prisma migrations
 - Object store: private S3-compatible storage
-- Authentication: invitation-led Auth.js or Supabase Auth
+- Authentication: invitation-led Auth.js v5 with a Prisma database adapter
 - Rendering: PDF.js in the viewer; asynchronous preview and thumbnail generation where needed
 - Messaging: transactional email provider through a notification abstraction
-- Jobs: durable queue for email, render, export and reminder work
+- Jobs: BullMQ with Redis for email, render, export and reminder work
 - Observability: structured logs, error tracking and request correlation IDs
 
 ## Environments

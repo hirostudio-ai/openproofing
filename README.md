@@ -33,19 +33,20 @@ Do not ask Claude Code to build the whole platform in one task. The workflow and
 | `docs/ACCEPTANCE_TESTS.md` | End-to-end and business-rule test catalogue |
 | `docs/CLAUDE_PHASE_PROMPT.md` | Reusable prompt for each implementation phase |
 
-## Suggested stack
+## Stack
 
-- Next.js with TypeScript
+- Next.js 15 (App Router) with TypeScript
 - PostgreSQL
 - Prisma
-- Tailwind CSS
-- Auth.js or Supabase Auth, with email invitation and magic-link login
-- Private S3-compatible object storage or Supabase Storage
+- Tailwind CSS v4
+- Auth.js v5, with email invitation and magic-link login
+- Private S3-compatible object storage (MinIO for local development)
 - PDF.js for document rendering
 - Resend or an equivalent email provider
-- A background job queue for rendering, email and exports
-- Vitest or Jest for unit and integration tests
+- BullMQ with Redis for background jobs (rendering, email, exports)
+- Vitest for unit and integration tests
 - Playwright for end-to-end tests
+- pnpm as the package manager
 
 ## Project identity
 
@@ -62,15 +63,17 @@ Equivalent components may be substituted only when the change is recorded as an 
 ## Initial repository shape
 
 ```text
-app/
-components/
-lib/
-  auth/
-  domain/
-  storage/
-  workflow/
+src/
+  app/
+  components/
+  lib/
+    auth/
+    domain/
+    storage/
+    workflow/
 prisma/
 tests/
+  unit/
   integration/
   e2e/
 docs/

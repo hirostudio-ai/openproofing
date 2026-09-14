@@ -34,6 +34,8 @@ AWAITING_ACCOUNT_MANAGER
                                             └──────────────► AWAITING_REVIEW
 ```
 
+`AWAITING_REVIEW` is a transient state. When the agency uploads a new proof and it validates, the system atomically creates the round snapshot, creates assignments and advances to `REVIEW_IN_PROGRESS`. Both events are recorded in the audit log. The agency marks which round the uploaded version is for.
+
 ## Artwork transitions
 
 | From | Event | Actor | Guard | To |
@@ -58,8 +60,8 @@ Restoring an archived item returns it to its recorded pre-archive state and is a
 
 ```text
 DRAFT → ACTIVE → AWAITING_ACCOUNT_MANAGER
-                    ├─ CHANGES_REQUIRED ─┐
-                    └─ NO_CHANGES_REQUIRED
+                    ├─ CHANGES_REQUESTED ─┐
+                    └─ NO_CHANGES_REQUESTED
                                   │
                                   ▼
                                 CLOSED
@@ -88,6 +90,7 @@ Rules:
 - A replacement creates a new assignment; it does not rewrite the original.
 - Completion in a sequential stage releases the next required assignment.
 - In a parallel stage, all required reviewers become available together and the stage completes only when all are completed or skipped.
+- When all required reviewers in a stage complete or are skipped, the stage advances. Optional reviewers (`required: false`) who have not completed are marked as not completed and the flow continues without them. They do not block stage progression.
 
 ## Feedback item state
 

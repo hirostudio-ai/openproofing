@@ -144,7 +144,7 @@ Fields: `id`, `approval_stage_id`, `user_id`, `sequence_number`, `required`.
 
 Fields: `id`, `artwork_id`, `proof_version_id`, `round_number`, `status`, `started_at`, `completed_at`, `closed_at`, `created_by_user_id`.
 
-Status: `DRAFT`, `ACTIVE`, `AWAITING_ACCOUNT_MANAGER`, `CHANGES_REQUIRED`, `NO_CHANGES_REQUIRED`, `CLOSED`.
+Status: `DRAFT`, `ACTIVE`, `AWAITING_ACCOUNT_MANAGER`, `CHANGES_REQUESTED`, `NO_CHANGES_REQUESTED`, `CLOSED`.
 
 Unique: `(artwork_id, round_number)`.
 
