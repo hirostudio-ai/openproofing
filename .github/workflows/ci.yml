@@ -1,0 +1,161 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm exec prisma generate
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type check
+        run: pnpm typecheck
+
+      - name: Format check
+        run: pnpm format:check
+
+  test:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: openproofing
+          POSTGRES_PASSWORD: openproofing_dev
+          POSTGRES_DB: openproofing_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U openproofing"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm exec prisma generate
+
+      - name: Run tests
+        run: pnpm test
+        env:
+          OPENPROOFING_DATABASE_URL: postgresql://openproofing:openproofing_dev@localhost:5432/openproofing_test?schema=public
+          OPENPROOFING_REDIS_URL: redis://localhost:6379/1
+          OPENPROOFING_S3_ENDPOINT: http://localhost:9000
+          OPENPROOFING_S3_REGION: us-east-1
+          OPENPROOFING_S3_BUCKET: openproofing-test
+          OPENPROOFING_S3_ACCESS_KEY: test
+          OPENPROOFING_S3_SECRET_KEY: test-secret
+          OPENPROOFING_S3_FORCE_PATH_STYLE: 'true'
+          OPENPROOFING_APP_URL: http://localhost:3000
+          OPENPROOFING_LOG_LEVEL: silent
+          AUTH_SECRET: ci-test-secret
+          AUTH_URL: http://localhost:3000
+          NODE_ENV: test
+
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, test]
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: openproofing
+          POSTGRES_PASSWORD: openproofing_dev
+          POSTGRES_DB: openproofing
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U openproofing"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm exec prisma generate
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: pnpm test:e2e
+        env:
+          OPENPROOFING_DATABASE_URL: postgresql://openproofing:openproofing_dev@localhost:5432/openproofing?schema=public
+          OPENPROOFING_REDIS_URL: redis://localhost:6379
+          OPENPROOFING_S3_ENDPOINT: http://localhost:9000
+          OPENPROOFING_S3_REGION: us-east-1
+          OPENPROOFING_S3_BUCKET: openproofing
+          OPENPROOFING_S3_ACCESS_KEY: test
+          OPENPROOFING_S3_SECRET_KEY: test-secret
+          OPENPROOFING_S3_FORCE_PATH_STYLE: 'true'
+          OPENPROOFING_APP_URL: http://localhost:3000
+          OPENPROOFING_LOG_LEVEL: silent
+          AUTH_SECRET: ci-test-secret
+          AUTH_URL: http://localhost:3000
